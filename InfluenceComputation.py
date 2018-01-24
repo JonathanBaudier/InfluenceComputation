@@ -1,4 +1,4 @@
-# -*-coding:utf-8 -*
+a# -*-coding:utf-8 -*
 #   This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
 #   If a copy of the MPL was not distributed with this file, You can obtain one at https://mozilla.org/MPL/2.0/
 import numpy
@@ -7,23 +7,13 @@ import time
 import math
 from numba import jit
 
-"""
-This script processes a grid model described in UCTE DEF format and performs an (N-1)-1 Influence Factor
-computation compliant with the all European TSO's proposal for a methodology developement in accordance with
-European Union System Operation Guidelines Article 76.
-
-Results are provided in .csv format compliant with French csv format using
--semicolons (;) as column separators
--comma (,) as decimal separators
-This can be modified in the overriding __str__() method from resultIF class
-"""
 #   Parameters
 countries = ['A','B','C','D2','D4','D7','D8','E','F','G','H','I','J','L','M','N','O','P','Q','R','S','T',
                  'U','V','W','Y','Z','0'] # The list of control area on which the assessment is performed.
 epsilon = 0.001              #As we are working on numeric value, values below epsilon are rounded to 0 and values between 1 - epsilon and 1 + epsilon are rounded to 1
 iatlTH = 5000               #Threshold above which IATL are regarded as infinite.
 ringChars = 7               #Significant characters used to determined rings : 8, one ring per node; 7, one ring per voltage level; 6, one ring per substation (all voltage)
-fileUCT = "Winter Peak 20170118_1030_RE3_UX5.uct"
+fileUCT = "example.uct"
 
 #pre-processing parameters
 pMergeCouplers = True
