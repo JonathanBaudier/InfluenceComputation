@@ -6,7 +6,6 @@ European TSOs are required by European Commission Regulation (EU) 2017/1485 of 2
 
 # Requirements
 This Python script requires the following dependencies:
-
 * sys, time and math (standard Python packages)
 * numpy, a package for scientific computing that provides matrix implementation
 * numba, an optimizing compiler compatible with numba that compile functions to accelerate their execution
@@ -16,4 +15,16 @@ This script should be compatible with any grid model compliant with UCTE data ex
 
 1. Place this script in any folder
 2. Provide a UCTE DEF grid model and set the variable **fileUCT** to the adequate path
-3. List the control areas on which the assessment shall be performed in the variable **countries** 
+    fileUCT = example.uct
+3. List the control areas on which the assessment shall be performed in the variable **countries**
+    countries = ['A','B','C','D2','D4','D7','D8','E','F','G','H','I','J','L','M','N','O','P','Q','R','S','T',                 'U','V','W','Y','Z','0']
+4. Run the script !
+
+Using default parameters, this script shall provides for each control area 2 .csv files. One with the influence factor of external grid elements and another with the influence factor of external generators.
+
+**Results are provided in .csv file compliant with French
+
+# How influence is defined
+
+For each grid element located outside of the investigated control area, the influence is defined as the maximum Line Outage Distribution Factor on any element located in the investigated control area in any N-i situation in which an i element is disconnected.
+For each grid element located outside of the investigated control area, the influence is defined as the maximum Line Outage Distribution Factor on any element located in the investigated control area in any N-i situation in which an i element is disconnected multiplied by the ratio of MVA thermal limits of the investigated element and the influenced element.
