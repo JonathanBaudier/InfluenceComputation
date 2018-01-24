@@ -22,7 +22,7 @@ This script should be compatible with any grid model compliant with UCTE data ex
 
 Using default parameters, this script shall provides for each control area 2 .csv files. One with the influence factor of external grid elements and another with the influence factor of external generators.
 
-**Results are provided in .csv file compliant with French
+**Results are provided in .csv file compliant with French formats i.e. semi-colon (;) as column separators and comma (,) as decimal separators**. This can be modified in the overriding __str__() method from resultIF class
 
 # How influence is defined
 
