@@ -1,6 +1,6 @@
 a# -*-coding:utf-8 -*
-#   This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
-#   If a copy of the MPL was not distributed with this file, You can obtain one at https://mozilla.org/MPL/2.0/
+#   This Source Code Form is subject to the terms of the Apache License, v. 2.0.
+#   If a copy of the licence was not distributed with this file, You can obtain one at http://www.apache.org/licenses/LICENSE-2.0
 import numpy
 import sys
 import time
@@ -132,13 +132,13 @@ class resultIF:
     header = staticmethod(header)
 
     def __str__(self):
-        resultat = self.eltR.nameBranch + ";" + str(self.eltR.ring) + ";" + str(self.eltR.PATL).replace(".",",") + ";"\
-                   + str(round(self.IFN1,4)).replace(".",",") + ";" + str(round(self.nIFN1,4)).replace(".",",") + ";" \
-                   + str(round(self.IFN2,4)).replace(".",",") + ";" + self.eltI.nameBranch + ";" + self.eltT.nameBranch\
-                   + ";" + str(self.eltT.tieLine) + ";" + str(round(self.nIFN2,4)).replace(".",",") + ";" \
-                   + self.eltIn.nameBranch + ";" + self.eltTn.nameBranch + ";" + str(self.eltTn.tieLine) + ";" \
-                   + str(self.eltTn.PATL).replace(".",",") + ";" + str(round(self.LODFit,4)).replace(".", ",") + ";" \
-                   + str(round(self.LODFti,4)).replace(".", ",") + '\n'
+        resultat = self.eltR.nameBranch + "," + str(self.eltR.ring) + "," + str(self.eltR.PATL) + ","\
+                   + str(round(self.IFN1,4)) + "," + str(round(self.nIFN1,4)) + "," \
+                   + str(round(self.IFN2,4)) + "," + self.eltI.nameBranch + "," + self.eltT.nameBranch + "," \
+                   + str(self.eltT.tieLine) + "," + str(round(self.nIFN2,4)) + "," \
+                   + self.eltIn.nameBranch + "," + self.eltTn.nameBranch + "," + str(self.eltTn.tieLine) + "," \
+                   + str(self.eltTn.PATL) + "," + str(round(self.LODFit,4)) + "," \
+                   + str(round(self.LODFti,4)) + '\n'
         return resultat     
 
 class finalResult:
