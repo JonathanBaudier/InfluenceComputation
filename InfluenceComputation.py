@@ -8,17 +8,21 @@ import math
 from numba import jit
 
 #   Parameters
-countries = ['A','B','C','D2','D4','D7','D8','E','F','G','H','I','J','L','M','N','O','P','Q','R','S','T',
-                 'U','V','W','Y','Z','0'] # The list of control area on which the assessment is performed.
+countries = ['A','B','C','D2','D4','D7','D8','E','F','G','H','I','J','L','M','N','O','P',
+             'Q','R','S','T', 'U','V','W','Y','Z','0'] # The list of control area on which the assessment is performed.
 epsilon = 0.001              #As we are working on numeric value, values below epsilon are rounded to 0 and values between 1 - epsilon and 1 + epsilon are rounded to 1
 iatlTH = 5000               #Threshold above which IATL are regarded as infinite.
 ringChars = 7               #Significant characters used to determined rings : 8, one ring per node; 7, one ring per voltage level; 6, one ring per substation (all voltage)
-fileUCT = "Winter Peak 20170118_1030_RE3_UX5.uct"
+fileUCT = 'example.uct'
 
 #pre-processing parameters
 pMergeCouplers = True
 pMergeXNodes = True
 pMergeEquivalents = False
+
+#output parameters
+colSep = ';'        #Column separator for .csv files ("," international standard, ";" for France)
+decSep = ','        #Decimal separator for .csv files ("." international standard, "," for France)
 
 class Branch:
     nbBranches = 0
@@ -50,7 +54,8 @@ class Branch:
         elif self.nameTo == node1:
             self.nameTo = node2
         else:
-            print("Error while merging branch : " + self.nameBranch + " node:" + node1 + " was not found among " + self.nameFrom + " and " + self.nameTo)
+            print(f'Error while merging branch : {self.nameBranch}, '
+                  f'node:{node1} was not found among {self.nameFrom} and {self.nameTo}')
 
     def __str__(self):
         return str(self.index) + "," + self.nameBranch + "," + self.nodeFrom.name + "," + self.nodeTo.name + "," + str(self.impedance) + "," + str(self.PATL) + "," + str(self.ring) + "," + str(self.tieLine)
@@ -82,7 +87,8 @@ class Branch:
         self.ring = min((self.nodeFrom.ring, self.nodeTo.ring))
 
     def header():
-        return "Index,Name,Node From,Node To,Impedance,PATL,Ring,Tie-Line"
+        return f'Index{colSep}Name{colSep}Node From{colSep}Node To{colSep}' \
+               f'Impedance{colSep}PATL{colSep}Ring{colSep}Tie-Line'
     header = staticmethod(header)
 
     def applyCouplers(self, dictCouplers):
@@ -128,34 +134,17 @@ class resultIF:
         self.LODFti = LODFti
 
     def header():
-        return "name;ring;PATL;N-1 IF; N-1 nIF;IF;i;t;Tie-line;nIF;i;t;Tie-line;PATL;LODF i-t" + '\n'
+        return f'name{colSep}PATL{colSep}Filtering IF{colSep}i{colSep}' \
+               f't{colSep}Identification IF{colSep}i{colSep}t\n'
     header = staticmethod(header)
 
     def __str__(self):
-        resultat = self.eltR.nameBranch + "," + str(self.eltR.ring) + "," + str(self.eltR.PATL) + ","\
-                   + str(round(self.IFN1,4)) + "," + str(round(self.nIFN1,4)) + "," \
-                   + str(round(self.IFN2,4)) + "," + self.eltI.nameBranch + "," + self.eltT.nameBranch + "," \
-                   + str(self.eltT.tieLine) + "," + str(round(self.nIFN2,4)) + "," \
-                   + self.eltIn.nameBranch + "," + self.eltTn.nameBranch + "," + str(self.eltTn.tieLine) + "," \
-                   + str(self.eltTn.PATL) + "," + str(round(self.LODFit,4)) + "," \
-                   + str(round(self.LODFti,4)) + '\n'
+        resultat = f'{self.eltR.nameBranch}{colSep}{self.eltR.PATL}{colSep}' \
+                   f'{str(round(self.IFN2,4)).replace(".", decSep)}{colSep}' \
+                   f'{self.eltI.nameBranch}{colSep}{self.eltT.nameBranch}{colSep}' \
+                   f'{str(round(self.nIFN2,4)).replace(".", decSep)}{colSep}' \
+                   f'{self.eltIn.nameBranch}{colSep}{self.eltTn.nameBranch}\n'
         return resultat     
-
-class finalResult:
-
-    def __init__(self, branches, nodes, results):
-        self.listBranches = branches
-        self.listNodes = nodes
-        self.listResults = results
-
-    def getBranches(self):
-        return self.listBranches
-
-    def getNodes(self):
-        return self.listNodes
-
-    def getResults(self):
-        return self.listResults
 
 class GenerationUnit:
     nbGenerators = 0
@@ -213,7 +202,7 @@ class Node:
             return False
 
     def header():
-        return "Index,Name,Ring,Connected,Branches"
+        return f'Index{colSep}Name{colSep}Ring{colSep}Connected{colSep}Branches'
     header = staticmethod(header)
 
     def getCountry(countryName):
@@ -371,9 +360,9 @@ def readLines(fileRead):
                 branches.append(Branch(nodeNameFrom, nodeNameTo, branchOrder, impedance, IATL, "Line"))
             i += 1
     else:
-        print("No line ##L was found in the UCT file")
+        print('No line ##L was found in the UCT file')
         sys.exit()
-    print("Lines read")
+    print('Lines read')
     return branches
 
 #Function defined to read transformers elements from the .uct file
@@ -395,16 +384,16 @@ def readTransformers(fileRead, setOfElements):
                 setOfElements.append(Branch(nodeNameFrom, nodeNameTo, branchOrder, impedance, IATL, "Transformer"))
             i += 1
     else:
-        print("No line ##T was found in the UCT file")
+        print('No line ##T was found in the UCT file')
         sys.exit()
-    print("Transformers read")
+    print('Transformers read')
 
 def readGenerators(fileRead):
-    fileLog.write("Reading generators" + '\n')
+    fileLog.write('Reading generators' + '\n')
     generators = []
     #looking for  ##N line.
     i = 0
-    while i < len(fileRead) and fileRead[i] !="##N":
+    while i < len(fileRead) and fileRead[i] != '##N':
         i += 1
     if i<len(fileRead):
         i+=1
@@ -414,16 +403,18 @@ def readGenerators(fileRead):
                 try:
                     generatorPower = float(fileRead[i][73:80])
                     if generatorPower >= 0.0:
-                        fileLog.write("     Generator " + nodeName + " has negative or zero maximum generation power" + '\n')
+                        fileLog.write(f'     Generator {nodeName} has negative or '
+                                      f'zero maximum generation power\n')
                     else:
                         generators.append(GenerationUnit(nodeName, -generatorPower))
                 except:
-                    fileLog.write("     Generator " + nodeName + " maximum permissible generation could not be read." + '\n')
+                    fileLog.write(f'     Generator {nodeName} maximum permissible '
+                                  f'generation could not be read.\n')
             i+=1
     else:
-        print("No line ##N was found in the UCT file")
+        print('No line ##N was found in the UCT file')
         sys.exit()
-    print("Generators read")
+    print('Generators read')
     return generators
 
 #Function defined to read couplers
@@ -480,7 +471,7 @@ def removeLoopElements(setOfElements):
         setOfElements[i].index = i
 
 def attachGenerators(setOfNodes, setOfElements):
-    fileLog.write("Attaching generators" + '\n')
+    fileLog.write('Attaching generators' + '\n')
     for elt in setOfElements:
         if elt.nodeName in dictCouplers.keys():
             elt.nodeName = dictCouplers[elt.nodeName]
@@ -647,7 +638,7 @@ def initializeRingAndConnection(setOfNodes, countryCode):
             branch.nodeTo.connected = True
             branch.nodeFrom.connected = True
         connectableBranches = [branch for branch in branches if branch.nodeTo.connected != branch.nodeFrom.connected]
-    print("Connectivity established in " + str(connectionSteps) + " steps.")
+    print(f'Connectivity established in {connectionSteps} steps.')
     mostConnectedNode.insertInCA()
     print("Ring 0 initialised with " + str(len([node for node in setOfNodes if node.ring == 0])) + " nodes.")
     #Listing nodes which are not connex to the assessed control area
@@ -680,10 +671,10 @@ def determineRings(setOfNodes):
         nodesInRing = [node for node in setOfNodes if node.ring == currentRing]
     #Checking consistency
     for elt in [node.name for node in setOfNodes if node.ring == 99 and node.connected]:
-        print("Node " + elt + " is connected but has no ring")
+        print(f'Node {elt} is connected but has no ring')
     for elt in [node.name for node in setOfNodes if node.ring < 99 and not node.connected]:
-        print("Node " + elt + " is in a ring but is not connected")
-    print("Rings determined. Maximum ring is #" + str(currentRing - 1) + ".")
+        print(f'Node {elt} is in a ring but is not connected')
+    print(f'Rings determined. Maximum ring is #{currentRing - 1}.')
     
 def mainComponentRestriction(setOfNodes, setOfElements):
     connexNodes = []
@@ -697,18 +688,19 @@ def mainComponentRestriction(setOfNodes, setOfElements):
     #checking consistency
     for node in connexNodes:
         if not node.connected:
-            print("Node " + node.name + " should not be in main component")
+            print(f'Node {node.name} should not be in main component')
     for branch in connexBranches:
         if not branch.nodeFrom.connected:
-            print("Branch " + branch.nameBranch + " should not be in main component")
+            print(f'Branch {branch.nameBranch} should not be in main component')
         if not branch.nodeTo.connected:
-            print("Branch " + branch.nameBranch + " should not be in main component")
+            print(f'Branch {branch.nameBranch} should not be in main component')
     #Rebuilding index
     for i in range(len(connexNodes)):
         connexNodes[i].index = i
     for i in range(len(connexBranches)):
         connexBranches[i].index = i
-    print("System restricted to main connected component with " + str(len(connexNodes)) + " nodes and " + str(len(connexBranches)) + " elements")
+    print(f'System restricted to main connected component with {len(connexNodes)} nodes '
+          f'and {len(connexBranches)} elements.')
     return connexNodes, connexBranches
 
 def computeISF(setOfNodes, setOfElements):
@@ -716,7 +708,7 @@ def computeISF(setOfNodes, setOfElements):
     #selecting slack node
     maxConnection = max([len(node.branches) for node in setOfNodes if node.name[0:len(countryCode)]== countryCode and node.name[6:7] == "1"])
     slackNode = [node for node in setOfNodes if len(node.branches) == maxConnection and node.name[0:len(countryCode)] == countryCode][0]
-    print("Slack node for the system is " + slackNode.name)
+    print(f'Slack node for the system is {slackNode.name}')
     #Susceptance matrix construction
     sizeN = len(setOfNodes)
     matrixB = numpy.zeros((sizeN, sizeN))
@@ -729,11 +721,11 @@ def computeISF(setOfNodes, setOfElements):
         matrixB[j,i] += 1 / elt.impedance
     matrixB = numpy.delete(matrixB, slackNode.index, axis = 0)
     matrixB = numpy.delete(matrixB, slackNode.index, axis = 1)
-    print("Susceptance matrix B built in " + str(round(time.clock() - t1, 2)) + " seconds.")
+    print(f'Susceptance matrix B built in {round(time.clock() - t1, 2)} seconds.')
     #Susceptance matrix inversion
     t1 = time.clock()
     inverseB = numpy.linalg.inv(matrixB)
-    print("Susceptance matrix B inverted in " + str(round(time.clock() - t1, 2)) + " seconds.")
+    print(f'Susceptance matrix B inverted in {round(time.clock() - t1, 2)} seconds.')
     t1 = time.clock()
     #Injection Shift Factors computation
     ISFBis = []
@@ -758,7 +750,7 @@ def computeISF(setOfNodes, setOfElements):
         ISFBis.append(-1/elt.impedance * numpy.array((BFrom-BTo)))
     matrixISF = numpy.array(ISFBis)
     matrixISF = numpy.insert(matrixISF, slackNode.index, 0, axis = 1)
-    print("ISF matrix computed in " + str(round(time.clock() - t1,1)) + " seconds.")
+    print(f'ISF matrix computed in {round(time.clock() - t1,1)} seconds.')
     return matrixISF
 
 def computeLODF(setOfElements, PTDF):
@@ -781,13 +773,13 @@ def computeLODF(setOfElements, PTDF):
     return arrayLODF
 
 def computeLODFg(setOfElements, ISF):
-    fileLog.write("computing IF for SGU")
+    fileLog.write('computing IF for SGU')
     LODF = []
     for elt in setOfElements:
         balancingGenerators = [eltGenerator for eltGenerator in generators if eltGenerator.country == elt.country and 
                                eltGenerator != elt]
         if len(balancingGenerators) == 0:
-            fileLog.write("No generators found to balance the contingency of " + elt.nameBranch)
+            fileLog.write(f'No generators found to balance the contingency of {elt.name}')
             column = numpy.zeros(ISF.shape[0])
         else:
              balancingPower = sum([elt.power for elt in balancingGenerators])
@@ -811,19 +803,16 @@ def computePTDF(setOfElements, ISF):
     for elt in setOfElements:
         elt.PTDF = arrayPTDF[elt.index, elt.index]
         if elt.PTDF<-epsilon:
-            print(elt.nameBranch + "has negative self-PTDF :" + str(elt.PTDF))
+            print(f'{elt.nameBranch} has negative self-PTDF : {elt.PTDF}')
         if elt.PTDF>1+epsilon:
-            print(elt.nameBranch + "has self-PTDF higher than 1 :" + str(elt.PTDF))
-    print("PTDF computed in " + str(round(time.clock() - t1, 1)) + " seconds.")
+            print(f'{elt.nameBranch} has self-PTDF higher than 1 : {elt.PTDF}')
+    print(f'PTDF computed in {round(time.clock() - t1, 1)} seconds.')
     return arrayPTDF
 
 def determineIext(setOfElements, setT, inputLODF, normalisationMatrix):
     setIext = []
     currentRing = 1
     setJ = [elt for elt in setOfElements if elt.ring == currentRing]
-    fileI = open("setIext-" + countryCode + ".csv", "w")
-    fileI.write("External contingencies " + '\n')
-    fileI.write("Element,Ring,self-PTDF,max IF (non-normalized),max IF (normalized)" + '\n')
     while len(setJ) > 0:
         LODF = numpy.absolute(matrixReduction(setJ, setT, inputLODF))
         LODFn = LODF * matrixReduction(setJ, setT, normalisationMatrix)
@@ -831,23 +820,22 @@ def determineIext(setOfElements, setT, inputLODF, normalisationMatrix):
             eltI = setJ[i]
             #Include any element from the ring
             setIext.append(eltI)
-            fileI.write(eltI.nameBranch + "," + str(eltI.ring) + "," + str(eltI.PTDF) + "," + str(numpy.amax(LODF[:,i])) + "," + str(numpy.amax(LODFn[:,i])) + '\n')
+            #fileI.write(eltI.nameBranch + "," + str(eltI.ring) + "," + str(eltI.PTDF) + "," + str(numpy.amax(LODF[:,i])) + "," + str(numpy.amax(LODFn[:,i])) + '\n')
         currentRing += 1
         setJ = [elt for elt in setOfElements if elt.ring == currentRing]
-    fileI.close()
-    print("External contingencies determinated : " + str(len(setIext)) + " elements selected within maximum ring #" + str(currentRing))
+    print(f'External contingencies determinated : {len(setIext)} elements selected within '
+          f'maximum ring {currentRing}')
     return setIext
 
 def determineT1(setT, setIext, inputLODF, normalisationMatrix):
     setT1 = []
-    LODF = numpy.absolute(matrixReduction(setIext, setT, inputLODF))
     setT1 = setT
-    print("Influenced Internal elements determinated : " + str(len(setT1)) + " elements selected.")
+    print(f'Influenced Internal elements determinated : {len(setT1)} elements selected.')
     return setT1
 
 def determineIint(setT1, setT, inputLODF, normalisationMatrix):
     setIint = list(setT)
-    print("Internal contingencies determinated : " + str(len(setIint)) + " elements selected.")
+    print(f'Internal contingencies determinated : {len(setIint)} elements selected.')
     return setIint
 
 def excludeRadialI(setJ):
@@ -857,7 +845,8 @@ def excludeRadialI(setJ):
             pass
         else:
             result.append(eltI)
-    print("Radial elements which do not lead to disconnection of a generetor are excluded : " + str(len(result)) + "/" + str(len(setJ)) + " kept.")
+    print(f'Radial elements which do not lead to disconnection of a generetor are excluded : '
+          f'{len(result)}/{len(setJ)} kept.')
     return result
 
 def computeIF(inputLODF, normalizationMatrix):
@@ -865,16 +854,8 @@ def computeIF(inputLODF, normalizationMatrix):
 
     sizeI = len(setI)
     sizeT = len(setT)
-
-    with open("setI-" + countryCode + ".csv", "w") as fileOut:
-        for elt in setI:
-            fileOut.write(str(elt) + '\n')
-    with open("setT-" + countryCode + ".csv", "w") as fileOut:
-        for elt in setT:
-            fileOut.write(str(elt) + '\n')
-
-    print("Internal elements monitored : " + str(sizeT))
-    print("Contingencies : " + str(sizeI))
+    print(f'Internal elements monitored : {sizeT}')
+    print(f'Contingencies : {sizeI}')
     vectorKii = [elt.PTDF for elt in setI]
     matrixKit = matrixReduction(setI, setT, arrayPTDF)
     excludeTI = excludeAB(setT, setI)
@@ -885,7 +866,7 @@ def computeIF(inputLODF, normalizationMatrix):
     while len(setR)>0:
         sizeR = len(setR)
         setsSize = numpy.array([sizeR,sizeI,sizeT], dtype=numpy.int32)
-        print("Assessing IF for ring #" + str(currentRing) + " with " + str(sizeR) + " elements.")
+        print(f'Assessing IF for ring #{currentRing} with {sizeR} elements.')
         LODF = matrixReduction(setR, setT, inputLODF)
         LODFn = LODF * matrixReduction(setR, setT, normalizationMatrix)
         vectorKrr = [elt.PTDF for elt in setR]
@@ -932,21 +913,11 @@ def computeIF(inputLODF, normalizationMatrix):
     return results
 
 def storeResults(results):
-    with open("resultsIF-" + countryCode + ".csv", "w") as fileOut:
-        #Writing results in French format
+    with open(f'resultsElements-{countryCode}.csv', 'w') as fileOut:
+        #Writing results
         fileOut.write(resultIF.header())
         for elt in results:
             fileOut.write(str(elt))         
-
-def storeTopology(setOfElements, setOfNodes):
-    with open("branches.csv", "w") as fileOut:
-        fileOut.write(Branch.header() + '\n')
-        for elt in setOfElements:
-            fileOut.write(str(elt) + '\n')
-    with open("nodes.csv", "w") as fileOut:
-        fileOut.write(Node.header() + '\n')
-        for elt in setOfNodes:
-            fileOut.write(str(elt) + '\n')
 
 def computeIFSGU():
     results = []
@@ -969,33 +940,26 @@ def computeIFSGU():
                 results[r][2] = IF
                 results[r][3] = [setI[i].nameBranch]
                 results[r][4] = [setT[k].nameBranch for k in range(len(setT)) if abs(vectorLODF[k]) == IF]
-            elif IF == results[r][2]:
-                results[r][3].append(setI[i].nameBranch)
-                results[r][4].append([setT[k].nameBranch for k in range(len(setT)) if abs(vectorLODF[k]) == IF and not setT[k] in results[r][4]])
             vectorLODFn = rLODFgn[:,r] + rLODFn[:,i]*LODFgn[setI[i].index,r]
             IFn = numpy.max(numpy.abs(vectorLODFn))
             if IFn > results[r][5]:
                 results[r][5] = IFn
                 results[r][6] = [setI[i].nameBranch]
                 results[r][7] = [setT[k].nameBranch for k in range(len(setT)) if abs(vectorLODFn[k]) == IFn]
-            elif IFn == results[r][5]:
-                results[r][6].append(setI[i].nameBranch)
-                results[r][7].append([setT[k].nameBranch for k in range(len(setT)) if abs(vectorLODFn[k]) == IFn and not setT[k] in results[r][7]])
     return results
 
 def storeResultsSGU(results):
-    with open("resultsSGU-" + countryCode + ".csv", "w") as fileOut:
-        fileOut.write("SGU;Power;IF;i;t;IFn;i;t" + '\n')
+    with open(f'resultsSGU-{countryCode}.csv', 'w') as fileOut:
+        fileOut.write(f'SGU{colSep}Power{colSep}Filtering IF{colSep}i{colSep}t{colSep}'
+                      f'Identification IF{colSep}i{colSep}t\n')
         for elt in resultsSGU:
-            fileOut.write(elt[0] + ";")
-            fileOut.write(str(elt[1]).replace(".",",") + ";")
-            fileOut.write(str(round(elt[2],4)).replace(".",",") + ";")
-            fileOut.write(str(elt[3]).replace("[","").replace("]","") + ";")
-            fileOut.write(str(elt[4]).replace("[","").replace("]","") + ";")
-            fileOut.write(str(round(elt[5],4)).replace(".",",") + ";")
-            fileOut.write(str(elt[6]).replace("[","").replace("]","") + ";")
-            fileOut.write(str(elt[7]).replace("[","").replace("]","") + '\n')
-
+            fileOut.write(f'{elt[0]}{colSep}{str(elt[1]).replace(".",decSep)}{colSep}'
+                          f'{str(round(elt[2],4)).replace(".",decSep)}{colSep}'
+                          f'{str(elt[3]).replace("[","").replace("]","")}{colSep}'
+                          f'{str(elt[4]).replace("[","").replace("]","")}{colSep}'
+                          f'{str(round(elt[5],4)).replace(".", decSep)}{colSep}'
+                          f'{str(elt[6]).replace("[","").replace("]","")}{colSep}'
+                          f'{str(elt[7]).replace("[","").replace("]","")}\n')
 
 #Constants (not to be modified by user)
 SBase = 1.0 #MVA, for p.u conversion.
@@ -1017,10 +981,10 @@ if __name__ == '__main__':
     for countryCode in countries:
         t0 = time.clock()
         tt = time.clock()
-        fileLog = open("logs-" + countryCode + ".txt", "w")
-        print("Required functions compiled ! Processing " + fileUCT)
+        fileLog = open(f'logs-{countryCode}.txt', 'w')
+        print(f'Required functions compiled ! Processing {fileUCT}')
             #Opening .uct file.
-        with open(fileUCT, "r") as file:
+        with open(fileUCT, 'r') as file:
             content = file.read().split('\n')
             branches = readLines(content)
             readTransformers(content, branches)
@@ -1039,8 +1003,9 @@ if __name__ == '__main__':
         #Merging tie-lines
         if pMergeXNodes:    mergeTieLines(branches, nodes)
 
-        print(str(len([branch for branch in branches if branch.impedance < 0])) + " branches have negative impedance.")
-        print("System read from " + fileUCT + " in " + str(round(time.clock() - t0, 3)) + " seconds")
+        print(f'{len([branch for branch in branches if branch.impedance < 0])} branches '
+              f'have negative impedance.')
+        print(f'System read from {fileUCT} in {round(time.clock() - t0, 1)} seconds')
     
         t0 = time.clock()
         initializeRingAndConnection(nodes, countryCode)
@@ -1052,8 +1017,8 @@ if __name__ == '__main__':
 
         attachGenerators(nodes, generators)
     
-        storeTopology(branches, nodes)
-        print("Topology determined in " + str(round(time.clock() - t0, 3)) + " seconds")
+        #storeTopology(branches, nodes)
+        print(f'Topology determined in {round(time.clock() - t0, 1)} seconds')
 
         t0 = time.clock()
         #Determination of set T
@@ -1061,26 +1026,26 @@ if __name__ == '__main__':
         sizeT = len(setT)
         # Reverse ring determination of set T
         # determineInverseRings(nodes)
-        print("Control area contains " + str(sizeT) + " elements")
+        print(f'Control area contains {sizeT} elements')
         # print("Control area inner rings determined in " + str(round(time.clock() - t0)) + " seconds")
     
         # Normalization matrix
         t0 = time.clock()
         arrayPATL = numpy.array([elt.PATL for elt in branches])
         arrayNorm = buildNormMatrix(arrayPATL)
-        print("Normalization matrix built in " + str(round(time.clock() - t0,3)) + " seconds.")
+        print(f'Normalization matrix built in {round(time.clock() - t0,1)} seconds.')
 
         # PTDF matrix computation
         t0 = time.clock()
         arrayISF = computeISF(nodes, branches)
         arrayPTDF = computePTDF(branches, arrayISF)
-        print("ISF and PTDF computed.")
+        print('ISF and PTDF computed.')
 
         #N-1 IF computation
         t0 = time.clock()
         setR = [branch for branch in branches if branch.ring >0]
         LODF = computeLODF(branches, arrayPTDF)
-        print("N-1 IF computed in " + str(round(time.clock() - t0, 1)) + " seconds.")
+        print(f'N-1 IF computed in {round(time.clock() - t0, 1)} seconds.')
     
         #External contingencies selection
         t0 = time.clock()
@@ -1092,27 +1057,23 @@ if __name__ == '__main__':
         setI = setIext + setIint
         setI = excludeRadialI(setI)
         setT = excludeRadialI(setT)
-        with open("setT.csv", "w") as file:
-            file.write("Index;Name;Node From;Node To;Impedance;Ring" + '\n')
-            for elt in setT:
-                file.write(str(elt) + '\n')
-        print("Sets determined in " + str(round(time.clock() - t0, 1)) + " seconds.")
+        print(f'Sets determined in {round(time.clock() - t0, 1)} seconds.')
 
         t0 = time.clock()
         
         results = computeIF(LODF, arrayNorm)
-        dictResults[countryCode] = finalResult(branches, nodes, results)
         #Storing results in .csv file.
         storeResults(results)
-        print("IF computed in " + str(round(time.clock() - t0,1)) + " seconds.")
-
+        print(f'IF computed in {round(time.clock() - t0,1)} seconds.')
+        t0 = time.clock()
+        t1 = time.clock()
         setR = [gen for gen in generators if gen.country != countryCode]
         genPower = numpy.array([elt.power for elt in setR])
         arrayNormg = buildNormGenerators(arrayPATL, genPower)
         LODFg, LODFgn = computeLODFg(setR, arrayISF)
+        print(f'IF computation for SGU initialised in {round(time.clock() - t1, 1)} seconds.')
         resultsSGU = computeIFSGU()
         storeResultsSGU(resultsSGU)
-        print("IF determined for SGU in " + str(round(time.clock() - t0, 1)) + " seconds.")
-
+        print(f'IF determined for SGU in {round(time.clock() - t0, 1)} seconds.')
         fileLog.close()
-        print("Whole process performed in " + str(round(time.clock() - tt, 0)) + " seconds.")
+        print(f'Whole process performed in {round(time.clock() - tt, 0)} seconds.')
