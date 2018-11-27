@@ -22,9 +22,16 @@ This script should be compatible with any grid model compliant with UCTE data ex
 
 Using default parameters, this script shall provides for each control area 2 .csv files. One with the influence factor of external grid elements and another with the influence factor of external generators.
 
-**Results are provided in .csv file compliant with French formats i.e. semi-colon (;) as column separators and comma (,) as decimal separators**. This can be modified in the overriding __str__() method from resultIF class
+**Results are provided in .csv file compliant with French formats i.e. semi-colon (;) as column separators and comma (,) as decimal separators**. This can be modified in the changing the parameters __colSep__ and __decSep__
 
 # How influence is defined
 
 For each grid element located outside of the investigated control area, the influence is defined as the maximum Line Outage Distribution Factor on any element located in the investigated control area in any N-i situation in which an i element is disconnected.
 For each grid element located outside of the investigated control area, the influence is defined as the maximum Line Outage Distribution Factor on any element located in the investigated control area in any N-i situation in which an i element is disconnected multiplied by the ratio of MVA thermal limits of the investigated element and the influenced element.
+
+# Handling of UCTE files
+
+This script has been developed as part of tests performed to assess the feasability of SOGL methodology of identification of relevant assets. As such, it has been developed taking into account possible flaws that may be encountered in .uct files and using defaults parameters:
+* any element with a current limit above 5,000 Amps is considered as physically irrelevant and its current limit is set to 0 Amps (thus resulting in an Idenfication Factor equal to 0), this may be changed by setting the value of __iatlTH__
+* all nodes linked by a coupler i.e. by a line with status = 2 (according to UCTE DEF specifications) are merged into a unique node, this may be changed by setting the value of __pMergeCouplers__ to False
+* the two tie-lines which are connected to a fictitious X-node are merged into a single line whose reactance is equal to the sum of the two reactances of the tie-lines and whose current limit is equal to the minimum current limit among the two tie-lines. If both tie-lines don't have the same order code, a fictitious code X is used. This may be changed by setting the value of __pMergeXNodes__ to False
