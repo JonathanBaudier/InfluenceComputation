@@ -26,8 +26,8 @@ Using default parameters, this script shall provides for each control area 2 .cs
 
 # How influence is defined
 
-For each grid element located outside of the investigated control area, the influence is defined as the maximum Line Outage Distribution Factor on any element located in the investigated control area in any N-i situation in which an i element is disconnected.
-For each grid element located outside of the investigated control area, the influence is defined as the maximum Line Outage Distribution Factor on any element located in the investigated control area in any N-i situation in which an i element is disconnected multiplied by the ratio of MVA thermal limits of the investigated element and the influenced element.
+For each grid element or generation unit located outside of the investigated control area, the **filtering influence factor** is defined as the maximum Line Outage Distribution Factor on any element located in the investigated control area in any N-i situation in which an i element is disconnected.
+For each grid element or generation unit located outside of the investigated control area, the **identification influence factor** is defined as the maximum Line Outage Distribution Factor on any element located in the investigated control area in any N-i situation in which an i element is disconnected multiplied by the ratio of MVA thermal limits of the investigated element and the influenced element.
 
 # Handling of UCTE files
 
