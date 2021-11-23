@@ -18,7 +18,7 @@ epsilon = 0.001     # As we are working on numeric value, values below epsilon a
 iatlTH = 5000               # Threshold above which IATL are regarded as infinite.
 ringChars = 7               # Significant characters used to determined rings :
 # 8, one ring per node; 7, one ring per voltage level; 6, one ring per substation (all voltage)
-fileUCT = '20210120_1030_RE3_UX6.uct'
+fileUCT = '20210908_1030_FO3_UX0.uct'
 
 # Control blocks to use for SGU influence computation (if different from the country)
 controlblocks = dict()
@@ -382,6 +382,7 @@ def buildNormGenerators(PATL, GenPower):
 
 # Function defined to read line elements from the .uct file
 def readLines(fileRead):
+    fileLog.write('Reading lines from the .uct file\n')
     branches = []
     # Looking for  '##L' line.
     i = 0
@@ -396,7 +397,12 @@ def readLines(fileRead):
                 nodeNameTo = fileRead[i][9:17]
                 branchOrder = fileRead[i][18]
                 impedance = float(fileRead[i][29:35])
-                IATL = float(fileRead[i][45:51])
+                try:
+                    IATL = float(fileRead[i][45:51])
+                except ValueError as e:
+                    IATL = 0
+                    fileLog.write(f'    Current limit could not be read for line {nodeNameFrom} {nodeNameTo} '
+                                  f'{branchOrder}, value in the .uct file{fileRead[i][45:51]} replaced by 0 \n')
                 branches.append(Branch(nodeNameFrom, nodeNameTo, branchOrder, impedance, IATL, False))
             i += 1
     else:
@@ -408,6 +414,7 @@ def readLines(fileRead):
 
 # Function defined to read transformers elements from the .uct file
 def readTransformers(fileRead, setOfElements):
+    fileLog.write('Reading transformers from the .uct file\n')
     # Looking for  '##' line.
     i = 0
     while i < len(fileRead) and fileRead[i] != "##T":
@@ -421,7 +428,12 @@ def readTransformers(fileRead, setOfElements):
                 nodeNameTo = fileRead[i][9:17]
                 branchOrder = fileRead[i][18]
                 impedance = float(fileRead[i][47:53])
-                IATL = float(fileRead[i][70:76])
+                try:
+                    IATL = float(fileRead[i][70:76])
+                except ValueError as e:
+                    IATL = 0
+                    fileLog.write(f'    Current limit could not be read for line {nodeNameFrom} {nodeNameTo} '
+                                  f'{branchOrder},value in the .uct file ({fileRead[i][70:76]}) replaced by 0 \n')
                 setOfElements.append(Branch(nodeNameFrom, nodeNameTo, branchOrder, impedance, IATL, True))
             i += 1
     else:
@@ -450,7 +462,7 @@ def readGenerators(fileRead):
                     else:
                         generators.append(GenerationUnit(nodeName, -generatorPower))
                 except ValueError as e:
-                    fileLog.write(f'Generator {nodeName} maximum permissible '
+                    fileLog.write(f'    Generator {nodeName} maximum permissible '
                                   f'generation could not be read.\n')
             i += 1
     else:
@@ -526,7 +538,7 @@ def attachGenerators(setOfNodes, setOfElements):
             elt.connected = True
             attachedNode[0].generators.append(elt)
         else:
-            fileLog.write(f'Generator {elt.name} could not be attached to node {elt.nodeName} : '
+            fileLog.write(f'    Generator {elt.name} could not be attached to node {elt.nodeName} : '
                           f'{len(attachedNode)} match(es) found.\n')
     generatorsToRemove = []
     for elt in setOfElements:
@@ -542,7 +554,6 @@ def attachGenerators(setOfNodes, setOfElements):
 
 # Function defined to merge 3-windings transformers in a 2-windings one.
 def mergeEquivalents(countryCode):
-    fileLog.write("Merging 3-windings transformers for country " + countryCode + '\n')
     dictNodes = dict()
     for elt in branches:
         try:
@@ -557,7 +568,8 @@ def mergeEquivalents(countryCode):
                   element.nameFrom[0:len(countryCode)] == countryCode and
                   element.nameTo[0:len(countryCode)] == countryCode]
     eltToRemove = []
-    print(str(len(eltToMerge)) + " transformers to merge in control area " + countryCode)
+    fileLog.write(f'    Merging {len(eltToMerge)}3-windings transformers for country {countryCode}\n')
+    print(f'{len(eltToMerge)} transformers to merge in control area {countryCode}')
     for eltEq in eltToMerge:
         fictionalNode = []
         # Identification of the fictional node
